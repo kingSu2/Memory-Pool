@@ -1,15 +1,10 @@
-#include "ngx_mem_pool.h"
+#include "nginx_mem_pool.h"
 
-
-//´´½¨Ö¸¶¨size´óÐ¡
-void* ngx_mem_pool::ngx_create_pool(size_t size)
-{
+void* ngx_mem_pool::ngx_create_pool(size_t size) {
 	ngx_pool_s* p;
 
-	p = (ngx_pool_s*)malloc(size);
-	if (p == nullptr) {
-		return nullptr;
-	}
+	p =(ngx_pool_s*) malloc(size);
+	if (!p)		return nullptr;
 
 	p->d.last = (u_char*)p + sizeof(ngx_pool_s);
 	p->d.end = (u_char*)p + size;
@@ -23,52 +18,24 @@ void* ngx_mem_pool::ngx_create_pool(size_t size)
 	p->large = nullptr;
 	p->cleanup = nullptr;
 
-	pool = p;
+	pool_ = p;
+
 	return p;
 }
 
-
-
-//µ÷ÓÃµÄÊÇngx_pallocÊµÏÖÄÚ´æ·ÖÅä£¬»á³õÊ¼»¯Îª0
-void* ngx_mem_pool::ngx_pcalloc(size_t size)
-{
-	void* p;
-
-	p = ngx_palloc( size);
-	if (p) {
-		ngx_memzero(p, size);
+void* ngx_mem_pool::ngx_palloc(size_t size) {
+	if (size <= pool_->max) {
+		return ngx_palloc_small(size, 1);
 	}
-
-	return p;
-
-}
-//²»¿¼ÂÇÄÚ´æ×Ö½Ú¶ÔÆë
-void* ngx_mem_pool::ngx_pnalloc(size_t size)
-{
-	if (size <= pool->max) {
-		return ngx_palloc_small(size, 0);
-	}
-
 	return ngx_palloc_large(size);
 }
-//¿¼ÂÇÄÚ´æ×Ö½Ú¶ÔÆë£¬´ÓÄÚ´æ³ØÖÐÉêÇësize´óÐ¡
-void* ngx_mem_pool::ngx_palloc(size_t size)
-{
-	if (size <= pool->max) {
-		return ngx_palloc_small( size, 1);
-	}
 
-	return ngx_palloc_large( size);
-}
-
-
-//Ð¡¿éÄÚ´æ·ÖÅä
-void* ngx_mem_pool::ngx_palloc_small(size_t size, ngx_uint_t  align)
-{
+//å°å—å†…å­˜åˆ†é…
+void* ngx_mem_pool::ngx_palloc_small(size_t size, ngx_uint_t align) {
 	u_char* m;
 	ngx_pool_s* p;
 
-	p = pool->current;
+	p = pool_->current;
 
 	do {
 		m = p->d.last;
@@ -84,14 +51,11 @@ void* ngx_mem_pool::ngx_palloc_small(size_t size, ngx_uint_t  align)
 		}
 
 		p = p->d.next;
-
 	} while (p);
 
-	return ngx_palloc_block(size);
+		return ngx_palloc_block(size);
 }
-//´ó¿éÄÚ´æ·ÖÅä
-void* ngx_mem_pool::ngx_palloc_large( size_t size)
-{
+void* ngx_mem_pool::ngx_palloc_large(size_t size) {
 	void* p;
 	ngx_uint_t  n;
 	ngx_pool_large_s* large;
@@ -103,7 +67,7 @@ void* ngx_mem_pool::ngx_palloc_large( size_t size)
 
 	n = 0;
 
-	for (large = pool->large; large; large = large->next) {
+	for (large = pool_->large; large; large = large->next) {
 		if (large->alloc == nullptr) {
 			large->alloc = p;
 			return p;
@@ -120,22 +84,17 @@ void* ngx_mem_pool::ngx_palloc_large( size_t size)
 		return nullptr;
 	}
 	large->alloc = p;
-	large->next = pool->large;
-	pool->large = large;
-
+	large->next = pool_->large;
+	pool_->large = large;
 
 	return p;
-
 }
-
-//·ÖÅäÐÂµÄÐ¡¿éÄÚ´æ³Ø
-void* ngx_mem_pool::ngx_palloc_block( size_t size)
-{
+void* ngx_mem_pool::ngx_palloc_block(size_t size) {
 	u_char* m;
 	size_t       psize;
 	ngx_pool_s* p, * newpool;
 
-	psize = (size_t)(pool->d.end - (u_char*)pool);
+	psize = (size_t)(pool_->d.end - (u_char*)pool_);
 
 	m = (u_char*)malloc(psize);
 	if (m == NULL) {
@@ -152,9 +111,9 @@ void* ngx_mem_pool::ngx_palloc_block( size_t size)
 	m = ngx_align_ptr(m, NGX_ALIGNMENT);
 	newpool->d.last = m + size;
 
-	for (p = pool->current; p->d.next; p = p->d.next) {
+	for (p = pool_->current; p->d.next; p = p->d.next) {
 		if (p->d.failed++ > 4) {
-			pool->current = p->d.next;
+			pool_->current = p->d.next;
 		}
 	}
 
@@ -162,73 +121,70 @@ void* ngx_mem_pool::ngx_palloc_block( size_t size)
 
 	return m;
 }
-//ÊÍ·Å´ó¿éÄÚ´æ
 void ngx_mem_pool::ngx_pfree(void* p)
 {
 	ngx_pool_large_s* l;
 
-	for (l = pool->large; l; l = l->next) {
+	for (l = pool_->large; l; l = l->next) {
 		if (p == l->alloc) {
-			
+
 			free(l->alloc);
 			l->alloc = nullptr;
 
-			return ;
+			return;
 		}
 	}
 
 
 }
 
-
-//ÄÚ´æÖØÖÃº¯Êý
 void ngx_mem_pool::ngx_reset_pool()
 {
 	ngx_pool_s* p;
 	ngx_pool_large_s* l;
 
-	for (l = pool->large; l; l = l->next) {
+	for (l = pool_->large; l; l = l->next) {
 		if (l->alloc) {
 			free(l->alloc);
 		}
 	}
 
-	//´¦ÀíµÚÒ»¿éÄÚ´æ
-	p = pool;
+	//å¤„ç†ç¬¬ä¸€å—å†…å­˜
+	p = pool_;
 	p->d.last = (u_char*)p + sizeof(ngx_pool_s);
 	p->d.failed = 0;
-	//µÚ¶þ¿éÖ±µ½×îºó
+	//å¤„ç†ç¬¬äºŒå—å†…å­˜
 	for (p = p->d.next; p; p = p->d.next)
 	{
 		p->d.last = (u_char*)p + sizeof(ngx_pool_data_t);
 		p->d.failed = 0;
 	}
 
-	pool->current = pool;
+	pool_->current = pool_;
 
-	pool->large = nullptr;
+	pool_->large = nullptr;
 }
-//ÄÚ´æ³ØµÄÏú»Ùº¯Êý
+
 void ngx_mem_pool::ngx_destory_pool()
 {
 	ngx_pool_s* p, * n;
 	ngx_pool_large_s* l;
 	ngx_pool_cleanup_s* c;
 
-	for (c = pool->cleanup; c; c = c->next) {
+	for (c = pool_->cleanup; c; c = c->next) {
 		if (c->handler) {
 			c->handler(c->data);
 		}
 	}
 
-	for (l = pool->large; l; l = l->next) {
+	for (l = pool_->large; l; l = l->next) {
 		if (l->alloc)
 		{
 			free(l->alloc);
 		}
 	}
 
-	for (p = pool, n = pool->d.next; /* void */; p = n, n = n->d.next) {
+	for (p = pool_, n = pool_->d.next; /* void */; p = n, n = n->d.next) {
 		free(p);
 
 		if (n == nullptr) {
@@ -238,19 +194,17 @@ void ngx_mem_pool::ngx_destory_pool()
 
 }
 
-	
-//Ìí¼Ó»Øµ÷ÇåÀí²Ù×÷º¯Êý
 ngx_pool_cleanup_s* ngx_mem_pool::ngx_pool_cleanup_add(size_t size)
 {
 	ngx_pool_cleanup_s* c;
 
-	c = (ngx_pool_cleanup_s*)ngx_palloc( sizeof(ngx_pool_cleanup_s));
+	c = (ngx_pool_cleanup_s*)ngx_palloc(sizeof(ngx_pool_cleanup_s));
 	if (c == nullptr) {
 		return nullptr;
 	}
 
 	if (size) {
-		c->data = ngx_palloc( size);
+		c->data = ngx_palloc(size);
 		if (c->data == nullptr) {
 			return nullptr;
 		}
@@ -261,9 +215,9 @@ ngx_pool_cleanup_s* ngx_mem_pool::ngx_pool_cleanup_add(size_t size)
 	}
 
 	c->handler = nullptr;
-	c->next = pool->cleanup;
+	c->next = pool_->cleanup;
 
-	pool->cleanup = c;
+	pool_->cleanup = c;
 
 
 
