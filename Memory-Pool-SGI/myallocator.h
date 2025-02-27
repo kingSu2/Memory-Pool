@@ -1,12 +1,9 @@
-
 #pragma once
 #include <mutex>
 #include <iostream>
+#include <mutex>
 
-
-
-
-// ·â×°ÁËmallocºÍfree£¬ÉèÖÃOOMÊÍ·ÅÄÚ´æµÄ»Øµ÷º¯Êı
+#if 0
 template <int __inst>
 class __malloc_alloc_template {
 private:
@@ -53,7 +50,7 @@ void* __malloc_alloc_template<__inst>::_S_oom_malloc(size_t __n)
 
 	for (;;) {
 		__my_malloc_handler = __malloc_alloc_oom_handler;
-		if (0 == __my_malloc_handler) { throw std::bad_alloc(); }////bad_allock´øÓĞ×Ö·û´®¹¹Ôìµ×²ãÊÇË½ÓĞ»¯
+		if (0 == __my_malloc_handler) { throw std::bad_alloc(); }////bad_allockï¿½ï¿½ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×²ï¿½ï¿½ï¿½Ë½ï¿½Ğ»ï¿½
 		(*__my_malloc_handler)();
 		__result = malloc(__n);
 		if (__result) return(__result);
@@ -88,10 +85,10 @@ public:
 	template <class _Other>
 	constexpr SGIAllocator(const SGIAllocator<_Other>&) noexcept {}
 
-	// ¿ª±Ùchunk¿éÄÚ´æ
+	// ï¿½ï¿½ï¿½ï¿½chunkï¿½ï¿½ï¿½Ú´ï¿½
 	T* allocate(size_t __n) {
-		// µ÷ÓÃallocate´«ÈëµÄÊÇÔªËØµÄ¸öÊıÁ¿
-		__n *= sizeof(T);//ËùÒÔÒª*TÀàĞÍµÄ×Ö½ÚµÃµ½×ÜÌå×Ö½ÚÊı
+		// ï¿½ï¿½ï¿½ï¿½allocateï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ØµÄ¸ï¿½ï¿½ï¿½ï¿½ï¿½
+		__n *= sizeof(T);//ï¿½ï¿½ï¿½ï¿½Òª*Tï¿½ï¿½ï¿½Íµï¿½ï¿½Ö½ÚµÃµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö½ï¿½ï¿½ï¿½
 		void* __ret = 0;
 
 		if (__n > (size_t)_MAX_BYTES) {
@@ -100,7 +97,7 @@ public:
 		else {
 			_Obj* volatile* __my_free_list = _S_free_list + _S_freelist_index(__n);
 
-			// ³ö×÷ÓÃÓò¿É×Ô¶¯Îö¹¹½âËø
+			// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 			std::lock_guard<std::mutex> guard(mtx);
 
 			_Obj* __result = *__my_free_list;
@@ -115,7 +112,7 @@ public:
 		return (T*)__ret;
 	}
 
-	// ¹é»¹chunk¿éÊÍ·ÅÄÚ´æ
+	// ï¿½é»¹chunkï¿½ï¿½ï¿½Í·ï¿½ï¿½Ú´ï¿½
 	void deallocate(void* __p, size_t __n) {
 		if (__n > (size_t)_MAX_BYTES)
 			malloc_alloc::deallocate(__p, __n);
@@ -130,7 +127,7 @@ public:
 			*__my_free_list = __q;
 		}
 	}
-	// ÄÚ´æ À©ÈİandËõÈİ
+	// ï¿½Ú´ï¿½ ï¿½ï¿½ï¿½ï¿½andï¿½ï¿½ï¿½ï¿½
 	static void* reallocate(void* __p, size_t __old_sz, size_t __new_sz) {
 		void* __result;
 		size_t __copy_sz;
@@ -145,50 +142,50 @@ public:
 		deallocate(__p, __old_sz);
 		return(__result);
 	}
-	// ¶ÔÏó¹¹Ôì
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	void construct(T* __p, const T& __val) {
 		new (__p) T(__val);
 	}
-	// ¶ÔÏóÎö¹¹
+	// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	void destroy(T* __p) {
 		__p->~T();
 	}
 private:
-	enum { _ALIGN = 8 };          // ×ÔÓÉÁ´±í´Ó8×Ö½Ú¿ªÊ¼£¬ÒÔ8×Ö½Ú¶ÔÆë£¬Ò»Ö±À©³äµ½128
-	enum { _MAX_BYTES = 128 };    // ÄÚ´æ³Ø×î´óµÄchunk¿é
-	enum { _NFREELISTS = 16 };    // ×ÔÓÉÁ´±íµÄ½Úµã¸öÊı
+	enum { _ALIGN = 8 };          // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½8ï¿½Ö½Ú¿ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½8ï¿½Ö½Ú¶ï¿½ï¿½ë£¬Ò»Ö±ï¿½ï¿½ï¿½äµ½128
+	enum { _MAX_BYTES = 128 };    // ï¿½Ú´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½chunkï¿½ï¿½
+	enum { _NFREELISTS = 16 };    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä½Úµï¿½ï¿½ï¿½ï¿½
 
-	// Chunk allocation stateÄÚ´æÒÑ·ÖÅächunk¿éÊ¹ÓÃÇé¿ö
+	// Chunk allocation stateï¿½Ú´ï¿½ï¿½Ñ·ï¿½ï¿½ï¿½chunkï¿½ï¿½Ê¹ï¿½ï¿½ï¿½ï¿½ï¿½
 
-	static char* _S_start_free;//ÄÚ´æ³Ø±¸ÓÃ¿É·ÖÅä¿Õ¼äµÄÆğÊ¼µØÖ·
-	static char* _S_end_free;//ÄÚ´æ³Ø±¸ÓÃ¿É·ÖÅä¿Õ¼äµÄÄ©Î²µØÖ·
+	static char* _S_start_free;//ï¿½Ú´ï¿½Ø±ï¿½ï¿½Ã¿É·ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
+	static char* _S_end_free;//ï¿½Ú´ï¿½Ø±ï¿½ï¿½Ã¿É·ï¿½ï¿½ï¿½Õ¼ï¿½ï¿½Ä©Î²ï¿½ï¿½Ö·
 	static size_t _S_heap_size;
 
-	// chunk¿éµÄÍ·ĞÅÏ¢£¬_M_free_list_linkÏÂÒ»¸öchunk¿éµÄµØÖ·ĞÅÏ¢
+	// chunkï¿½ï¿½ï¿½Í·ï¿½ï¿½Ï¢ï¿½ï¿½_M_free_list_linkï¿½ï¿½Ò»ï¿½ï¿½chunkï¿½ï¿½Äµï¿½Ö·ï¿½ï¿½Ï¢
 	union _Obj {
 		union _Obj* _M_free_list_link;
 		char _M_client_data[1];    
 	};
 
-	// _S_free_list±íÊ¾´æ´¢×ÔÓÉÁ´±íÊı×éµÄÆğÊ¼µØÖ·
+	// _S_free_listï¿½ï¿½Ê¾ï¿½æ´¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½Ö·
 	static _Obj* volatile _S_free_list[_NFREELISTS];
 
-	// »ùÓÚfreelistÊµÏÖ£¬¼ÓËø¿¼ÂÇÏß³Ì°²È«
+	// ï¿½ï¿½ï¿½ï¿½freelistÊµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß³Ì°ï¿½È«
 	static std::mutex mtx;
 
-	// °Ñ__bytesµÄ´óĞ¡ÉÏµ÷ÖÁ8µÄÕûÊı±¶·µ»Ø
+	// ï¿½ï¿½__bytesï¿½Ä´ï¿½Ğ¡ï¿½Ïµï¿½ï¿½ï¿½8ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	static size_t _S_round_up(size_t __bytes) {
 		return (((__bytes)+(size_t)_ALIGN - 1) & ~((size_t)_ALIGN - 1));
 	}
 
-	// ·µ»Ø __bytes ´óĞ¡µÄchunk¿éÎ»ÓÚ free-list ÖĞµÄ±àºÅ
+	// ï¿½ï¿½ï¿½ï¿½ __bytes ï¿½ï¿½Ğ¡ï¿½ï¿½chunkï¿½ï¿½Î»ï¿½ï¿½ free-list ï¿½ĞµÄ±ï¿½ï¿½
 	static size_t _S_freelist_index(size_t __bytes) {
 		return (((__bytes)+(size_t)_ALIGN - 1) / (size_t)_ALIGN - 1);
 	}
 
 
 
-		//·ÖÅä¿Õ¼ä£¬°Ñ·ÖÅäºÃµÄchunk¿é½øĞĞÁ¬½Ó
+		//ï¿½ï¿½ï¿½ï¿½Õ¼ä£¬ï¿½Ñ·ï¿½ï¿½ï¿½Ãµï¿½chunkï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 	static void* _S_refill(size_t __n) {
 		int __nobjs = 20;
 
@@ -199,7 +196,7 @@ private:
 		_Obj* __next_obj;
 		int __i;
 
-		if (1 == __nobjs) return(__chunk);	//±¸ÓÃchunk¿é¿Õ¼äÖ»¹»Ò»¸ö·ÖÅä
+		if (1 == __nobjs) return(__chunk);	//ï¿½ï¿½ï¿½ï¿½chunkï¿½ï¿½Õ¼ï¿½Ö»ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 		__my_free_list = _S_free_list + _S_freelist_index(__n);
 
 		/* Build free list in chunk */
@@ -219,11 +216,11 @@ private:
 		return(__result);
 	}
 
-	//Ö÷Òª¸ºÔğ·ÖÅä×ÔÓÉÁ´±íchunk
+	//ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½chunk
 	static char* _S_chunk_alloc(size_t __size, int& __nobjs) {
 		char* __result = nullptr;
 		size_t __total_bytes = __size * __nobjs;
-		size_t __bytes_left = _S_end_free - _S_start_free; //²é¿´±¸ÓÃ¿Õ¼ä
+		size_t __bytes_left = _S_end_free - _S_start_free; //ï¿½é¿´ï¿½ï¿½ï¿½Ã¿Õ¼ï¿½
 
 		if (__bytes_left >= __total_bytes) {
 			__result = _S_start_free;
@@ -236,7 +233,7 @@ private:
 			__result = _S_start_free;
 			_S_start_free += __total_bytes;
 			return(__result);
-		}//Èç¹û»¹ÓĞÊ£Óà£¬»á·ÖÅäµ½ÆäËûÏàÓ¦µÄchunk¿é
+		}//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê£ï¿½à£¬ï¿½ï¿½ï¿½ï¿½äµ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½ï¿½chunkï¿½ï¿½
 		else {
 			size_t __bytes_to_get = 2 * __total_bytes + _S_round_up(_S_heap_size >> 4);
 			// Try to make use of the left-over piece.
@@ -291,7 +288,7 @@ size_t SGIAllocator<T>::_S_heap_size = 0;
 
 
 template <typename T>
-// typename¸æËß±àÒëÆ÷_ObjÊÇÀàĞÍ¶¨Òå
+// typenameï¿½ï¿½ï¿½ß±ï¿½ï¿½ï¿½ï¿½ï¿½_Objï¿½ï¿½ï¿½ï¿½ï¿½Í¶ï¿½ï¿½ï¿½
 typename SGIAllocator<T>::_Obj* volatile SGIAllocator<T>::_S_free_list[_NFREELISTS] = {
 	nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,
 	nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr
@@ -299,3 +296,75 @@ typename SGIAllocator<T>::_Obj* volatile SGIAllocator<T>::_S_free_list[_NFREELIS
 
 template <typename T>
 std::mutex SGIAllocator<T>::mtx;
+#endif
+template<typename T>
+class myallocator
+{
+public:
+		//å¼€è¾Ÿå†…å­˜
+		void* allocate(size_t __n)ï¼›
+		//é‡Šæ”¾å†…å­˜
+		void deallocate(void* __p, size_t __n)ï¼›
+		//å†…å­˜æ‰©å®¹å’Œç¼©å®¹
+		void* reallocate(void* __p, size_t __old_sz, size_t __new_sz);
+
+		//å¯¹è±¡æ„é€ 
+		void construct(T* __p, const T& val) {
+			new (__p) T(val);
+		}
+
+		void destroy(T* __p) {
+			__p->~T();
+		}
+private:
+	enum { _ALIGN = 8 };          // å…«å­—èŠ‚å¯¹é½
+	enum { _MAX_BYTES = 128 };    // å†…å­˜çš„æœ€å¤§chunkå—
+	enum { _NFREELISTS = 16 };    // è‡ªç”±é“¾è¡¨çš„ä¸ªæ•°
+
+	//æ¯ä¸€ä¸ªchunkå—çš„å¤´ä¿¡æ¯
+	union _Obj {
+		union _Obj* _M_free_list_link;//å­˜å‚¨ä¸‹ä¸€å—çš„åœ°å€
+		char _M_client_data[1];
+	};
+
+	//å·²åˆ†é…çš„chunkå—çš„ä½¿ç”¨æƒ…å†µ
+	static char* _S_start_free;
+	static char* _S_end_free;
+	static size_t _S_heap_size;
+
+	//è‡ªç”±é“¾è¡¨
+	static _Obj* volatile _S_free_list[_NFREELISTS];
+
+	static std::mutex mtx;
+
+	// å°†__bytesä¸Šè°ƒè‡³æœ€é‚»è¿‘çš„8çš„å€æ•°
+	static size_t _S_round_up(size_t __bytes) {
+		return (((__bytes)+(size_t)_ALIGN - 1) & ~((size_t)_ALIGN - 1));
+	}
+
+	// è¿”å›__byteså¤§å°çš„å°åŒºå¿«ä½äºfree-list ä¸­çš„ç¼–å·
+	static size_t _S_freelist_index(size_t __bytes) {
+		return (((__bytes)+(size_t)_ALIGN - 1) / (size_t)_ALIGN - 1);
+	}
+	//æŠŠåˆ†é…å¥½çš„chunkå—è¿›è¡Œè¿æ¥
+	static void* _S_refill(size_t __n);
+
+};
+
+template <typename T>
+char* myallocator<T>::_S_start_free = nullptr;
+
+template <typename T>
+char* myallocator<T>::_S_end_free = nullptr;
+
+template <typename T>
+size_t myallocator<T>::_S_heap_size = 0;
+
+template <typename T>
+_Obj* volatile myallocator<T>::_S_free_list[_NFREELISTS] = { 
+	nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,
+	nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr,nullptr
+};
+
+template <typename T>
+std::mutex myallocator<T>::mtx;
